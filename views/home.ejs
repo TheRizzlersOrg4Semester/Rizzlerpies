@@ -1,0 +1,52 @@
+<% var title = 'Recipe Cookbook - Home'; %>
+<center>
+    <h2>
+        <font face="Comic Sans MS" color="#FF0066">
+            ðŸ“– Browse Our Amazing Recipes! ðŸ“–
+        </font>
+    </h2>
+</center>
+
+<hr color="#FF00FF" size="5">
+
+<% recipes.forEach((recipe) => { %>
+<table width="100%" border="3" cellpadding="10" cellspacing="0" bgcolor="#FFFF99" style="margin-bottom: 20px;">
+    <tr>
+        <td width="70%">
+            <font face="Arial" size="5" color="#0000FF">
+                <b><%- recipe.title %></b>
+            </font>
+            <br><br>
+            <font face="Arial" size="3" color="#000000">
+                â° <b>Time:</b> <%- recipe.time_minutes %> minutes<br>
+                ðŸ’° <b>Price:</b> $<%- recipe.price %><br>
+                ðŸ·ï¸ <b>Tags:</b>
+                <% recipe.tags.forEach((tag, index) => { %>
+                    <font color="#FF0066"><%- tag.name %></font><% if (index < recipe.tags.length - 1) { %>, <% } %>
+                <% }); %>
+            </font>
+        </td>
+        <td width="30%" align="center" valign="middle">
+            <a href="/recipes/<%- recipe.id %>/">
+                <font face="Arial" size="4" color="#FFFFFF">
+                    <table border="2" cellpadding="10" bgcolor="#FF0066">
+                        <tr>
+                            <td>
+                                <b>VIEW RECIPE</b>
+                            </td>
+                        </tr>
+                    </table>
+                </font>
+            </a>
+        </td>
+    </tr>
+</table>
+<% }); %>
+
+<% if (!recipes.length) { %>
+<center>
+    <font face="Comic Sans MS" size="4" color="#FF0000">
+        <b>No recipes found! ðŸ˜¢</b>
+    </font>
+</center>
+<% } %>
