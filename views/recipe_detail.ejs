@@ -1,8 +1,7 @@
 <% var title = `${recipe.title} - Recipe Cookbook`; %>
 <center>
     <h2>
-        <font face="Comic Sans MS" color="#FF0066">
-            ðŸ½ï¸ <%- recipe.title %> ðŸ½ï¸
+        <font face="Comic Sans MS" color="#FF0066">            🍽️ <%- recipe.title %> 🍽️
         </font>
     </h2>
 </center>
@@ -10,13 +9,9 @@
 <table width="100%" border="3" cellpadding="15" cellspacing="0" bgcolor="#CCFFCC">
     <tr>
         <td>
-            <font face="Arial" size="3" color="#000000">
-                â° <b>Cooking Time:</b> <%- recipe.time_minutes %> minutes<br>
-                ðŸ’° <b>Estimated Price:</b> $<%- recipe.price %><br>
-                <% if (recipe.link) { %>
-                ðŸ”— <b>Link:</b> <a href="<%- recipe.link %>"><%- recipe.link %></a><br>
-                <% } %>
-                ðŸ·ï¸ <b>Tags:</b>
+            <font face="Arial" size="3" color="#000000">                ⏰ <b>Cooking Time:</b> <%- recipe.time_minutes %> minutes<br>                💰 <b>Estimated Price:</b> $<%- recipe.price %><br>
+                <% if (recipe.link) { %>                🔗 <b>Link:</b> <a href="<%- recipe.link %>"><%- recipe.link %></a><br>
+                <% } %>                🏷️ <b>Tags:</b>
                 <% recipe.tags.forEach((tag, index) => { %>
                     <font color="#FF0066"><b><%- tag.name %></b></font><% if (index < recipe.tags.length - 1) { %>, <% } %>
                 <% }); %>
@@ -31,8 +26,7 @@
     <tr>
         <td>
             <center>
-                <font face="Comic Sans MS" size="4" color="#0000FF">
-                    <b>ðŸ¥• INGREDIENTS ðŸ¥•</b>
+                <font face="Comic Sans MS" size="4" color="#0000FF">                    <b>🥕 INGREDIENTS 🥕</b>
                 </font>
             </center>
             <br>
@@ -55,8 +49,7 @@
     <tr>
         <td>
             <center>
-                <font face="Comic Sans MS" size="4" color="#0000FF">
-                    <b>ðŸ‘¨â€ðŸ³ COOKING INSTRUCTIONS ðŸ‘¨â€ðŸ³</b>
+                <font face="Comic Sans MS" size="4" color="#0000FF">                    <b>👨‍🍳 COOKING INSTRUCTIONS 👨‍🍳</b>
                 </font>
             </center>
             <br>
@@ -82,8 +75,7 @@
         <table border="3" cellpadding="10" bgcolor="#00FF00">
             <tr>
                 <td>
-                    <font face="Arial" size="4" color="#000000">
-                        <b>â¬…ï¸ BACK TO HOME</b>
+                    <font face="Arial" size="4" color="#000000">                        <b>⬅️ BACK TO HOME</b>
                     </font>
                 </td>
             </tr>

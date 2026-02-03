@@ -1,8 +1,7 @@
 <% var title = 'Recipe Cookbook - Home'; %>
 <center>
     <h2>
-        <font face="Comic Sans MS" color="#FF0066">
-            ðŸ“– Browse Our Amazing Recipes! ðŸ“–
+        <font face="Comic Sans MS" color="#FF0066">            📖 Browse Our Amazing Recipes! 📖
         </font>
     </h2>
 </center>
@@ -17,10 +16,7 @@
                 <b><%- recipe.title %></b>
             </font>
             <br><br>
-            <font face="Arial" size="3" color="#000000">
-                â° <b>Time:</b> <%- recipe.time_minutes %> minutes<br>
-                ðŸ’° <b>Price:</b> $<%- recipe.price %><br>
-                ðŸ·ï¸ <b>Tags:</b>
+            <font face="Arial" size="3" color="#000000">                ⏰ <b>Time:</b> <%- recipe.time_minutes %> minutes<br>                💰 <b>Price:</b> $<%- recipe.price %><br>                🏷️ <b>Tags:</b>
                 <% recipe.tags.forEach((tag, index) => { %>
                     <font color="#FF0066"><%- tag.name %></font><% if (index < recipe.tags.length - 1) { %>, <% } %>
                 <% }); %>
@@ -45,8 +41,7 @@
 
 <% if (!recipes.length) { %>
 <center>
-    <font face="Comic Sans MS" size="4" color="#FF0000">
-        <b>No recipes found! ðŸ˜¢</b>
+    <font face="Comic Sans MS" size="4" color="#FF0000">        <b>No recipes found! 😢</b>
     </font>
 </center>
 <% } %>
