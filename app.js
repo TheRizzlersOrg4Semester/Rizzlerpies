@@ -15,14 +15,36 @@ const swaggerDocument = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+let server = null;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('trust proxy', 1);
 app.use(expressLayouts);
 app.set('layout', 'base');
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.get('/healthz', (req, res) => {
+  res.json({
+    status: 'ok',
+  });
+});
+
+app.get('/readyz', async (req, res, next) => {
+  try {
+    await initDb();
+    res.json({
+      status: 'ready',
+    });
+  } catch (err) {
+    console.error('Readiness check failed', err);
+    res.status(503).json({
+      status: 'not-ready',
+    });
+  }
+});
 
 app.get('/', async (req, res, next) => {
   try {
@@ -291,7 +313,7 @@ app.use((err, req, res, next) => {
 
 initDb()
   .then(() => {
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });
   })
@@ -299,3 +321,24 @@ initDb()
     console.error('Failed to initialize database', err);
     process.exit(1);
   });
+
+const shutdown = (signal) => {
+  console.log(`${signal} received, shutting down gracefully`);
+
+  if (!server) {
+    process.exit(0);
+    return;
+  }
+
+  server.close(() => {
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000).unref();
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

@@ -1,7 +1,10 @@
+const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const DATABASE_PATH = path.join(__dirname, 'legacy', 'src', 'app.db');
+const DATABASE_PATH = process.env.DATABASE_PATH
+  ? path.resolve(process.env.DATABASE_PATH)
+  : path.join(__dirname, 'legacy', 'src', 'app.db');
 
 let dbWrapper = null;
 
@@ -43,6 +46,7 @@ const wrapDb = (db) => ({
 
 const openDb = () =>
   new Promise((resolve, reject) => {
+    fs.mkdirSync(path.dirname(DATABASE_PATH), { recursive: true });
     const db = new sqlite3.Database(DATABASE_PATH, (err) => {
       if (err) {
         reject(err);
