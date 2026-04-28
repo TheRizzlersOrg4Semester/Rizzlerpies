@@ -1,0 +1,108 @@
+name: Node CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    env:
+      PORT: 4000
+      CI: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate main files
+        run: |
+          test -f package.json
+          test -f app.js
+          test -f package-lock.json
+
+      - name: Syntax check
+        run: node --check app.js
+
+      - name: Start application
+        run: |
+          npm start &
+          echo $! > app.pid
+
+      - name: Wait for server
+        run: |
+          for i in {1..20}; do
+            if curl -fsS "http://127.0.0.1:${PORT}/" > /dev/null; then
+              echo "Server is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Server did not start in time"
+          exit 1
+
+      - name: Smoke test routes
+        run: |
+          curl -fsS "http://127.0.0.1:${PORT}/" > /dev/null
+          curl -fsS "http://127.0.0.1:${PORT}/apidocs" > /dev/null
+          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/recipes/" > /dev/null
+          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/tags/" > /dev/null
+          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/ingredients/" > /dev/null
+
+      - name: Stop application
+        run: |
+          if [ -f app.pid ]; then
+            kill $(cat app.pid) || true
+          fi
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config > /tmp/docker-compose.rendered.yml
+
+      - name: Start Docker Compose stack
+        run: docker compose up -d --build
+
+      - name: Wait for proxied stack
+        run: |
+          for i in {1..20}; do
+            if curl -fsS "http://127.0.0.1/readyz" > /dev/null; then
+              echo "Proxy stack is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Docker Compose stack did not start in time"
+          exit 1
+
+      - name: Smoke test proxied routes
+        run: |
+          curl -fsS "http://127.0.0.1/" > /dev/null
+          curl -fsS "http://127.0.0.1/apidocs" > /dev/null
+          curl -fsS "http://127.0.0.1/api/recipe/recipes/" > /dev/null
+          curl -fsS "http://127.0.0.1/api/recipe/tags/" > /dev/null
+          curl -fsS "http://127.0.0.1/api/recipe/ingredients/" > /dev/null
+
+      - name: Show Docker Compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop Docker Compose stack
+        if: always()
+        run: |
+          docker compose down --volumes --remove-orphans

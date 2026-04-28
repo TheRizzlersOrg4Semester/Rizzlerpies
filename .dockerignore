@@ -1,0 +1,7 @@
+node_modules
+.git
+.venv
+npm-debug.log
+legacy/app.db
+legacy/src/app.db
+legacy/src/__pycache__
