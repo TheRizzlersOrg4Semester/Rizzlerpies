@@ -2,10 +2,15 @@ services:
   app:
     build:
       context: .
+    depends_on:
+      - signoz
     environment:
       NODE_ENV: production
       PORT: 4000
       DATABASE_PATH: /data/app.db
+      OTEL_SERVICE_NAME: rizzlerpies
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4318/v1/traces
+      OTEL_LOG_LEVEL: info
     expose:
       - "4000"
     volumes:
@@ -39,6 +44,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - backend
+
+  signoz:
+    image: signoz/signoz:latest
+    ports:
+      - "3301:3301"
+      - "4317:4317"
+      - "4318:4318"
+    restart: unless-stopped
     networks:
       - backend
 

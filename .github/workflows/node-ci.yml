@@ -78,10 +78,10 @@ jobs:
       - name: Start Docker Compose stack
         run: docker compose up -d --build
 
-      - name: Wait for proxied stack
+      - name: Wait for HTTPS proxy readiness
         run: |
           for i in {1..20}; do
-            if curl -fsS "http://127.0.0.1/readyz" > /dev/null; then
+            if curl -kfsS "https://127.0.0.1/readyz" > /dev/null; then
               echo "Proxy stack is up"
               exit 0
             fi
@@ -90,13 +90,14 @@ jobs:
           echo "Docker Compose stack did not start in time"
           exit 1
 
-      - name: Smoke test proxied routes
+      - name: Smoke test proxy redirect and HTTPS routes
         run: |
-          curl -fsS "http://127.0.0.1/" > /dev/null
-          curl -fsS "http://127.0.0.1/apidocs" > /dev/null
-          curl -fsS "http://127.0.0.1/api/recipe/recipes/" > /dev/null
-          curl -fsS "http://127.0.0.1/api/recipe/tags/" > /dev/null
-          curl -fsS "http://127.0.0.1/api/recipe/ingredients/" > /dev/null
+          curl -fsSI "http://127.0.0.1/" | grep -i "location: https://"
+          curl -kfsS "https://127.0.0.1/" > /dev/null
+          curl -kfsS "https://127.0.0.1/apidocs" > /dev/null
+          curl -kfsS "https://127.0.0.1/api/recipe/recipes/" > /dev/null
+          curl -kfsS "https://127.0.0.1/api/recipe/tags/" > /dev/null
+          curl -kfsS "https://127.0.0.1/api/recipe/ingredients/" > /dev/null
 
       - name: Show Docker Compose logs on failure
         if: failure()
@@ -106,3 +107,46 @@ jobs:
         if: always()
         run: |
           docker compose down --volumes --remove-orphans
+
+  deploy-to-azure-vm:
+    needs: build-and-smoke-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate deploy secrets
+        run: |
+          test -n "${SSH_HOST}"
+          test -n "${SSH_USER}"
+          test -n "${SSH_PRIVATE_KEY}"
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${SSH_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Upload release bundle
+        run: |
+          DEPLOY_ROOT="${DEPLOY_PATH:-/home/${SSH_USER}/rizzlerpies}"
+          RELEASE_DIR="${DEPLOY_ROOT}/releases/${GITHUB_SHA}"
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "mkdir -p '${DEPLOY_ROOT}/releases'"
+          git archive --format=tar HEAD | ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "rm -rf '${RELEASE_DIR}' && mkdir -p '${RELEASE_DIR}' && tar -xf - -C '${RELEASE_DIR}'"
+
+      - name: Deploy release on VM
+        run: |
+          DEPLOY_ROOT="${DEPLOY_PATH:-/home/${SSH_USER}/rizzlerpies}"
+          RELEASE_DIR="${DEPLOY_ROOT}/releases/${GITHUB_SHA}"
+          CURRENT_LINK="${DEPLOY_ROOT}/current"
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "ln -sfn '${RELEASE_DIR}' '${CURRENT_LINK}' && bash '${CURRENT_LINK}/scripts/deploy/remote-deploy.sh' '${CURRENT_LINK}'"

@@ -16,22 +16,28 @@ Traffic flow:
 
 Recommended baseline:
 
-1. Use an Ubuntu LTS VM.
-2. Open inbound ports `22` and `80` in the Azure Network Security Group.
-3. Install Docker Engine and the Docker Compose plugin.
-4. Clone this repository onto the VM.
+1. Run `bash scripts/azure/setup.sh` from a machine with Azure CLI access.
+2. Add the printed `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` and optional `DEPLOY_PATH` values as GitHub Actions secrets.
+3. Push to `main` to let the workflow deploy automatically.
 
 ## Start The Stack
 
+The deployment workflow uploads the current commit to the VM and runs:
+
 ```bash
-docker compose up -d --build
-docker compose ps
-curl http://127.0.0.1/readyz
+bash scripts/deploy/remote-deploy.sh /home/<user>/rizzlerpies/current
 ```
 
-If Azure networking is configured correctly, the app should now be reachable on:
+That script executes:
 
-`http://<vm-public-ip>/`
+```bash
+docker compose up -d --build --remove-orphans
+curl -k https://127.0.0.1/readyz
+```
+
+If Azure networking is configured correctly, the app should be reachable on:
+
+`https://<vm-public-ip>/`
 
 ## Day-2 Operations
 
@@ -42,14 +48,19 @@ docker compose logs -f
 docker compose ps
 docker compose restart proxy
 docker compose restart app
-docker compose pull
 docker compose up -d --build
+```
+
+To destroy the environment completely:
+
+```bash
+bash scripts/azure/teardown.sh
 ```
 
 Health endpoints:
 
 - `GET /healthz`: liveness for the application
-- `GET /readyz`: readiness through the proxy or directly against the app
+- `GET /readyz`: readiness through the HTTPS proxy or directly against the app
 - `GET /nginx-health`: proxy-only health check
 
 ## Why This Is DevOps-Friendly
