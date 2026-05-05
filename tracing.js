@@ -1,21 +1,19 @@
 const { NodeSDK } = require('@opentelemetry/sdk-node');
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-const { Resource } = require('@opentelemetry/resources');
-const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 
 const serviceName = process.env.OTEL_SERVICE_NAME || 'rizzlerpies';
-const exporterUrl = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://signoz:4318/v1/traces';
+const exporterUrl =
+  process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+  'http://signoz:4318/v1/traces';
 
-const traceExporter = new OTLPTraceExporter({
-  url: exporterUrl,
-});
+process.env.OTEL_SERVICE_NAME = serviceName;
 
 const sdk = new NodeSDK({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+  traceExporter: new OTLPTraceExporter({
+    url: exporterUrl,
   }),
-  traceExporter,
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
