@@ -41,6 +41,9 @@ jobs:
       - name: Syntax check
         run: node --check app.js
 
+      - name: Lint JavaScript
+        run: npm run lint
+
       - name: Start application
         run: |
           npm start &

@@ -33,7 +33,7 @@ app.get('/healthz', (req, res) => {
   });
 });
 
-app.get('/readyz', async (req, res, next) => {
+app.get('/readyz', async (req, res) => {
   try {
     await initDb();
     res.json({
@@ -102,7 +102,7 @@ app.get('/recipes/:id/', async (req, res, next) => {
 });
 
 app.post('/api/user/create/', (req, res) => {
-  const { email, password, name } = req.body || {};
+  const { email, name } = req.body || {};
   res.status(201).json({
     email,
     name,
@@ -307,7 +307,7 @@ app.delete('/api/recipe/tags/:id/', (req, res) => {
   res.status(204).send('');
 });
 
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
   res.status(500).send('Internal Server Error');
 });

@@ -5,6 +5,7 @@
   "description": "RizzlerPies Node.js + Express + EJS SSR app",
   "main": "app.js",
   "scripts": {
+    "lint": "eslint .",
     "start": "node app.js"
   },
   "dependencies": {
@@ -18,5 +19,10 @@
     "sqlite3": "^5.1.7",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0"
   }
 }
