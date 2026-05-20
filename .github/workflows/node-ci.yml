@@ -125,15 +125,22 @@ jobs:
 
     steps:
       - name: Checkout repository
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' }}
         uses: actions/checkout@v4
 
+      - name: Skip deployment when Azure secrets are not configured
+        if: ${{ env.SSH_HOST == '' || env.SSH_USER == '' || env.SSH_PRIVATE_KEY == '' }}
+        run: echo "Azure deployment secrets are not configured; skipping deployment."
+
       - name: Validate deploy secrets
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' }}
         run: |
           test -n "${SSH_HOST}"
           test -n "${SSH_USER}"
           test -n "${SSH_PRIVATE_KEY}"
 
       - name: Configure SSH
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' }}
         run: |
           install -m 700 -d ~/.ssh
           printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
@@ -141,6 +148,7 @@ jobs:
           ssh-keyscan -H "${SSH_HOST}" >> ~/.ssh/known_hosts
 
       - name: Upload release bundle
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' }}
         run: |
           DEPLOY_ROOT="${DEPLOY_PATH:-/home/${SSH_USER}/rizzlerpies}"
           RELEASE_DIR="${DEPLOY_ROOT}/releases/${GITHUB_SHA}"
@@ -148,6 +156,7 @@ jobs:
           git archive --format=tar HEAD | ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "rm -rf '${RELEASE_DIR}' && mkdir -p '${RELEASE_DIR}' && tar -xf - -C '${RELEASE_DIR}'"
 
       - name: Deploy release on VM
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' }}
         run: |
           DEPLOY_ROOT="${DEPLOY_PATH:-/home/${SSH_USER}/rizzlerpies}"
           RELEASE_DIR="${DEPLOY_ROOT}/releases/${GITHUB_SHA}"
