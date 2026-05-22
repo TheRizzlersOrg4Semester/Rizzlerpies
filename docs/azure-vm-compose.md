@@ -4,13 +4,13 @@
 
 For the first deployment stage, keep everything on one Azure VM:
 
-- `proxy`: Nginx reverse proxy exposed on port `80`
-- `app`: Express cookbook application on the internal Docker network
+- `proxy`: Nginx reverse proxy exposed on ports `80` and `443`
+- `app-a` and `app-b`: Express cookbook application containers on the internal Docker network
 - `app_data`: Docker volume for the SQLite database file
 
 Traffic flow:
 
-`Client -> Azure public IP -> Nginx proxy -> Express app -> SQLite volume`
+`Client -> Azure public IP -> Nginx proxy -> app-a/app-b -> SQLite volume`
 
 ## Prepare The VM
 
@@ -47,7 +47,7 @@ Useful commands:
 docker compose logs -f
 docker compose ps
 docker compose restart proxy
-docker compose restart app
+docker compose restart app-a app-b
 docker compose up -d --build
 ```
 
@@ -66,16 +66,17 @@ Health endpoints:
 ## Why This Is DevOps-Friendly
 
 - The proxy is the only public entrypoint.
-- The application is isolated on an internal Docker network.
+- The application containers are isolated on an internal Docker network.
+- Nginx can keep serving traffic through one app container if the other is unhealthy.
 - The SQLite file is moved out of the image and onto a persistent Docker volume.
-- Both services have restart policies and health checks.
+- The proxy and app containers have restart policies and health checks.
 - The same `docker-compose.yml` works for local verification and the Azure VM.
 
 ## Splitting Across Multiple VMs Later
 
 This setup is intentionally simple, but it leaves a clean path for the next step:
 
-1. Move `proxy` onto its own VM and update the Nginx upstream from `app:4000` to the private IP or private DNS name of the application VM.
+1. Move `proxy` onto its own VM and update the Nginx upstreams from `app-a:4000` and `app-b:4000` to private IPs or private DNS names for the application VMs.
 2. Keep the app private and only allow traffic from the proxy VM.
 3. Replace SQLite with a network-accessible database before spreading the workload across multiple VMs.
 

@@ -1,4 +1,5 @@
 require('./tracing');
+const os = require('os');
 const path = require('path');
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
@@ -16,6 +17,7 @@ const swaggerDocument = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const instanceName = process.env.INSTANCE_NAME || os.hostname();
 let server = null;
 
 app.set('view engine', 'ejs');
@@ -25,6 +27,10 @@ app.use(expressLayouts);
 app.set('layout', 'base');
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use((req, res, next) => {
+  res.set('X-App-Instance', instanceName);
+  next();
+});
 app.use('/apidocs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get('/healthz', (req, res) => {

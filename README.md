@@ -13,7 +13,9 @@ The app listens on `http://localhost:4000` by default.
 
 ## Run With Proxy And Docker Compose
 
-This repository now includes a simple Nginx reverse proxy in front of the app.
+This repository includes an Nginx reverse proxy in front of two Express app
+containers. Nginx load balances traffic across `app-a` and `app-b` on the
+internal Docker network.
 
 ```bash
 docker compose up -d --build
@@ -27,7 +29,8 @@ Endpoints:
 - Proxy-only health: `http://localhost/nginx-health`
 - SigNoz observability UI: `http://localhost:3301`
 
-The Compose stack is designed for a single Azure VM first, with a clean path to split the proxy and app onto separate VMs later.
+The Compose stack is designed for a single Azure VM first, with a clean path to
+split the proxy and app containers onto separate VMs later.
 
 ## Infrastructure Automation
 
