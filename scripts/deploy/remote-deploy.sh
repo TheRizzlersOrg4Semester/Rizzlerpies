@@ -25,8 +25,22 @@ require_cmd curl
 
 cd "${APP_DIR}"
 
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  fail "DATABASE_URL is required for PostgreSQL deployment. Set it in the app VM deployment environment."
+fi
+
+log "DATABASE_URL is set; value is hidden."
+
 log "Validating docker compose configuration."
 docker compose config >/dev/null
+
+log "Building app image for schema migration."
+docker compose build app-a
+
+log "Running PostgreSQL schema migrations."
+if ! docker compose run --rm --no-deps app-a npm run db:migrate; then
+  fail "PostgreSQL schema migration failed. Aborting deployment."
+fi
 
 log "Starting application stack."
 docker compose up -d --build --remove-orphans
