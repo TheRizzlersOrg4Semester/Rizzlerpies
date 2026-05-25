@@ -25,6 +25,20 @@ require_cmd curl
 
 cd "${APP_DIR}"
 
+DEFAULT_ENV_FILE="${APP_DIR}/shared/production.env"
+if [[ ! -f "${DEFAULT_ENV_FILE}" && -f "${APP_DIR}/../shared/production.env" ]]; then
+  DEFAULT_ENV_FILE="${APP_DIR}/../shared/production.env"
+fi
+
+DEPLOY_ENV_FILE="${DEPLOY_ENV_FILE:-${DEFAULT_ENV_FILE}}"
+if [[ -f "${DEPLOY_ENV_FILE}" ]]; then
+  log "Loading deployment environment from ${DEPLOY_ENV_FILE}."
+  set -a
+  # shellcheck disable=SC1090
+  source "${DEPLOY_ENV_FILE}"
+  set +a
+fi
+
 if [[ -z "${DATABASE_URL:-}" ]]; then
   fail "DATABASE_URL is required for PostgreSQL deployment. Set it in the app VM deployment environment."
 fi
