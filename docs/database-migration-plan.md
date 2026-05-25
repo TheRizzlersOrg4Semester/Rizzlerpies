@@ -226,7 +226,7 @@ Relative to `main`, the migration work changes or adds:
 - `docs/postgres-db-vm.md`
 - `docs/production-data-migration-runbook.md`
 - `docs/run-data-migration.md`
-- `migrations/20260525120000_initial_recipe_schema.js`
+- `migrations/1779722203738_initial-recipe-schema.js`
 - `package-lock.json`
 - `package.json`
 - `scripts/azure/setup-postgres-vm.sh`

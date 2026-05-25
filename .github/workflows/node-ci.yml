@@ -56,7 +56,7 @@ jobs:
           test -f app.js
           test -f package-lock.json
           test -f db.js
-          test -f migrations/20260525120000_initial_recipe_schema.js
+          test -f migrations/1779722203738_initial-recipe-schema.js
           test -f scripts/db/migrate-sqlite-to-postgres.js
           test -f scripts/test/smoke-db.sh
 
