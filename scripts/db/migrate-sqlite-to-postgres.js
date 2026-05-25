@@ -1,3 +1,5 @@
+// sqlite3 is intentionally kept for this reproducible one-time legacy data
+// migration only. Runtime database access lives in db.js and uses PostgreSQL.
 const sqlite3 = require('sqlite3').verbose();
 const { Pool } = require('pg');
 

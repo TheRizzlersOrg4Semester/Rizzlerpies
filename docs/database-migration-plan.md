@@ -146,6 +146,20 @@ target recipe tables already contain data, unless `FORCE_MIGRATION=true` is set
 explicitly. `sqlite3` stays in the project temporarily because it is required
 for this one-time legacy data migration.
 
+## Conservative Cleanup State
+
+After the migration work, cleanup stays conservative so exam evidence remains
+reproducible:
+
+- Legacy SQLite database files are not deleted.
+- The `app_data` Docker volume remains documented as legacy SQLite storage for
+  backup, rollback, and exam review.
+- `sqlite3` remains installed only because
+  `scripts/db/migrate-sqlite-to-postgres.js` must be reproducible for the
+  one-time data migration and exam review.
+- Active runtime database access in `db.js` does not import or use `sqlite3`.
+- Active app runtime configuration uses `DATABASE_URL` for PostgreSQL.
+
 ## DevOps Elements
 
 Branch history:
