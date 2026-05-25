@@ -90,8 +90,25 @@ VM after the runtime database access is switched to PostgreSQL:
 DATABASE_URL=postgres://rizzlerpies:<password>@<db-private-ip>:5432/rizzlerpies
 ```
 
-Store the real value as deployment environment configuration or a GitHub Actions
-secret. Do not commit the real password or full production `DATABASE_URL`.
+Place the real `DATABASE_URL` in the app VM deployment environment. The value
+can be provided through a GitHub Actions secret, a deployment-generated env file
+on the app VM, or another secret management mechanism used for the exam
+deployment.
+
+Use `.env.production.example` as the committed shape of the production
+environment:
+
+```text
+DATABASE_URL=postgres://<postgres_user>:<postgres_password>@<db_vm_private_ip>:5432/<database_name>
+NODE_ENV=production
+PORT=4000
+```
+
+Do not commit real `.env` files, real PostgreSQL passwords, or the full
+production `DATABASE_URL`.
+
+The app VM must reach the database VM over private Azure networking. PostgreSQL
+port `5432` must not be opened publicly to the internet.
 
 ## Security Rationale
 
