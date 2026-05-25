@@ -32,6 +32,16 @@ Endpoints:
 The Compose stack is designed for a single Azure VM first, with a clean path to
 split the proxy and app containers onto separate VMs later.
 
+## Local PostgreSQL Validation
+
+Production PostgreSQL is intended to run on a dedicated database VM, not inside
+the main app VM Compose stack. For local development and CI-style validation,
+use the local-only override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
+```
+
 ## Infrastructure Automation
 
 Azure infrastructure scripts now live in `scripts/azure/`:
