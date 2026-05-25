@@ -6,6 +6,7 @@
   "main": "app.js",
   "scripts": {
     "db:create-migration": "node-pg-migrate create",
+    "db:migrate:data": "node scripts/db/migrate-sqlite-to-postgres.js",
     "db:migrate": "node-pg-migrate up",
     "db:migrate:redo": "node-pg-migrate redo",
     "db:rollback": "node-pg-migrate down",
