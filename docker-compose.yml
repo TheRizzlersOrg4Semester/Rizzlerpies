@@ -1,15 +1,15 @@
 x-app-service: &app-service
   build:
     context: .
-  depends_on:
-    - signoz
   environment: &app-environment
     NODE_ENV: production
     PORT: 4000
     DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
     OTEL_SERVICE_NAME: rizzlerpies
-    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://signoz:4318/v1/traces
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
     OTEL_LOG_LEVEL: info
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   expose:
     - "4000"
   restart: unless-stopped
@@ -56,16 +56,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    networks:
-      - backend
-
-  signoz:
-    image: signoz/signoz:latest
-    ports:
-      - "3301:3301"
-      - "4317:4317"
-      - "4318:4318"
-    restart: unless-stopped
     networks:
       - backend
 
