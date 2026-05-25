@@ -6,14 +6,12 @@ x-app-service: &app-service
   environment: &app-environment
     NODE_ENV: production
     PORT: 4000
-    DATABASE_PATH: /data/app.db
+    DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
     OTEL_SERVICE_NAME: rizzlerpies
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://signoz:4318/v1/traces
     OTEL_LOG_LEVEL: info
   expose:
     - "4000"
-  volumes:
-    - app_data:/data
   restart: unless-stopped
   healthcheck:
     test: ["CMD", "node", "scripts/healthcheck.js", "http://127.0.0.1:4000/readyz"]
@@ -72,6 +70,8 @@ services:
       - backend
 
 volumes:
+  # Legacy SQLite storage retained for one-time migration and rollback review.
+  # Runtime app containers now use DATABASE_URL and do not mount this volume.
   app_data:
 
 networks:
