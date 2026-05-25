@@ -11,6 +11,7 @@
     "db:migrate:redo": "node-pg-migrate redo",
     "db:rollback": "node-pg-migrate down",
     "lint": "eslint .",
+    "smoke:db": "bash scripts/test/smoke-db.sh",
     "start": "node app.js"
   },
   "dependencies": {
