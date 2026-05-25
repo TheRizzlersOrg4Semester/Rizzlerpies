@@ -220,6 +220,7 @@ Relative to `main`, the migration work changes or adds:
 - `README.md`
 - `db.js`
 - `docker-compose.local-postgres.yml`
+- `docker-compose.migration.local.yml`
 - `docker-compose.migration.yml`
 - `docker-compose.yml`
 - `docs/database-migration-plan.md`

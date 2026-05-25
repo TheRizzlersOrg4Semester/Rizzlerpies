@@ -43,6 +43,17 @@ npm run db:migrate
 
 ## 4. Run The One-Time Data Migration
 
+There are two supported data migration compose paths. They use the same
+migration script but mount SQLite from different places.
+
+### Production VM Migration
+
+Use this on the app VM. It mounts the legacy Docker volume:
+
+```text
+DATABASE_PATH=/data/app.db
+```
+
 Run the migration override from the app VM. It mounts the legacy SQLite
 `app_data` volume read-only and writes the existing cookbook data to
 PostgreSQL:
@@ -53,6 +64,38 @@ docker compose -f docker-compose.yml -f docker-compose.migration.yml run --rm mi
 
 This command targets only the `migrate-sqlite-data` service. It does not start
 the proxy/Nginx service and the migration service exposes no ports.
+
+### Local File-Based Migration Test
+
+Use this on a developer machine or in CI-style validation when the repository
+fixture exists at `legacy/src/app.db`. It mounts the local SQLite file:
+
+```text
+DATABASE_PATH=/seed/app.db
+```
+
+Start the local PostgreSQL helper first:
+
+```bash
+export DATABASE_URL='postgres://rizzlerpies:rizzlerpies@postgres:5432/rizzlerpies'
+docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
+```
+
+Run schema migrations:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml run --rm app-a npm run db:migrate
+```
+
+Then run the local file migration:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml -f docker-compose.migration.local.yml run --rm migrate-sqlite-data
+```
+
+If `legacy/src/app.db` does not exist locally, use the production VM path with
+the legacy `app_data` volume or restore a copy of the legacy SQLite file before
+running the local migration test.
 
 ## 5. Verify Row Counts
 
