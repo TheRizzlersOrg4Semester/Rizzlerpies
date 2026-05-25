@@ -32,6 +32,32 @@ Endpoints:
 The Compose stack is designed for a single Azure VM first, with a clean path to
 split the proxy and app containers onto separate VMs later.
 
+## Database Migration Feature
+
+The cookbook database migration moves the app from local SQLite to PostgreSQL
+for a multi-VM production architecture.
+
+Before the migration, the app used SQLite from `DATABASE_PATH=/data/app.db` in
+the app VM `app_data` Docker volume. After the migration, the app uses
+`DATABASE_URL` to connect to PostgreSQL on a dedicated database VM over private
+Azure networking.
+
+Migration documentation:
+
+- [Database migration plan](docs/database-migration-plan.md)
+- [PostgreSQL database VM](docs/postgres-db-vm.md)
+- [Production data migration runbook](docs/production-data-migration-runbook.md)
+
+## Local PostgreSQL Validation
+
+Production PostgreSQL is intended to run on a dedicated database VM, not inside
+the main app VM Compose stack. For local development and CI-style validation,
+use the local-only override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
+```
+
 ## Infrastructure Automation
 
 Azure infrastructure scripts now live in `scripts/azure/`:
@@ -66,7 +92,7 @@ Deployment flow:
 
 1. GitHub Actions validates the app locally.
 2. The workflow packages the current commit and uploads it to the Azure VM over SSH.
-3. The VM runs `scripts/deploy/remote-deploy.sh`, which executes `docker compose up -d --build --remove-orphans` and waits for the HTTPS `/readyz` endpoint behind Nginx.
+3. The VM runs `scripts/deploy/remote-deploy.sh`, which validates `DATABASE_URL`, runs PostgreSQL schema migrations, executes `docker compose up -d --build --remove-orphans` and waits for the HTTPS `/readyz` endpoint behind Nginx.
 
 ## SigNoz observability
 

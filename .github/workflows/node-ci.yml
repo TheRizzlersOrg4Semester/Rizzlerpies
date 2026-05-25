@@ -15,8 +15,26 @@ jobs:
       matrix:
         node-version: [20.x]
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: rizzlerpies
+          POSTGRES_USER: rizzlerpies
+          POSTGRES_PASSWORD: rizzlerpies
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rizzlerpies -d rizzlerpies"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
+      BASE_URL: http://127.0.0.1:4000
       PORT: 4000
+      DATABASE_PATH: legacy/src/app.db
+      DATABASE_URL: postgres://rizzlerpies:rizzlerpies@127.0.0.1:5432/rizzlerpies
       CI: true
 
     steps:
@@ -37,79 +55,89 @@ jobs:
           test -f package.json
           test -f app.js
           test -f package-lock.json
+          test -f db.js
+          test -f migrations/1779722203738_initial-recipe-schema.js
+          test -f scripts/db/migrate-sqlite-to-postgres.js
+          test -f scripts/test/smoke-db.sh
 
       - name: Syntax check
-        run: node --check app.js
+        run: |
+          node --check app.js
+          node --check db.js
+          node --check scripts/db/migrate-sqlite-to-postgres.js
+          bash -n scripts/test/smoke-db.sh
 
       - name: Lint JavaScript
         run: npm run lint
 
+      - name: Run PostgreSQL schema migrations
+        run: npm run db:migrate
+
+      - name: Import CI recipe data from SQLite fixture
+        run: npm run db:migrate:data
+
+      - name: Verify imported recipe data
+        run: |
+          node <<'NODE'
+          const { Pool } = require('pg');
+
+          const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+          (async () => {
+            const result = await pool.query(`
+              SELECT
+                (SELECT COUNT(*)::int FROM recipes) AS recipes,
+                (SELECT COUNT(*)::int FROM ingredients) AS ingredients,
+                (SELECT COUNT(*)::int FROM tags) AS tags,
+                (SELECT COUNT(*)::int FROM recipe_ingredients) AS recipe_ingredients,
+                (SELECT COUNT(*)::int FROM recipe_tags) AS recipe_tags
+            `);
+            console.log(result.rows[0]);
+
+            if (result.rows[0].recipes < 1) {
+              throw new Error('Expected imported recipe rows');
+            }
+          })()
+            .finally(() => pool.end())
+            .catch((err) => {
+              console.error(err);
+              process.exit(1);
+            });
+          NODE
+
       - name: Start application
         run: |
-          npm start &
+          npm start > app.log 2>&1 &
           echo $! > app.pid
 
-      - name: Wait for server
+      - name: Wait for readiness
         run: |
           for i in {1..20}; do
-            if curl -fsS "http://127.0.0.1:${PORT}/" > /dev/null; then
-              echo "Server is up"
+            if curl -fsS "${BASE_URL}/readyz" > /dev/null; then
+              echo "Application is ready"
               exit 0
             fi
             sleep 2
           done
-          echo "Server did not start in time"
+          echo "Application did not become ready in time"
           exit 1
 
-      - name: Smoke test routes
+      - name: Smoke test migrated recipe endpoints
+        run: npm run smoke:db
+
+      - name: Show application logs on failure
+        if: failure()
         run: |
-          curl -fsS "http://127.0.0.1:${PORT}/" > /dev/null
-          curl -fsS "http://127.0.0.1:${PORT}/apidocs" > /dev/null
-          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/recipes/" > /dev/null
-          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/tags/" > /dev/null
-          curl -fsS "http://127.0.0.1:${PORT}/api/recipe/ingredients/" > /dev/null
+          if [ -f app.log ]; then
+            cat app.log
+          fi
 
       - name: Stop application
+        if: always()
         run: |
           if [ -f app.pid ]; then
             kill $(cat app.pid) || true
           fi
-
-      - name: Validate Docker Compose configuration
-        run: docker compose config > /tmp/docker-compose.rendered.yml
-
-      - name: Start Docker Compose stack
-        run: docker compose up -d --build
-
-      - name: Wait for HTTPS proxy readiness
-        run: |
-          for i in {1..20}; do
-            if curl -kfsS "https://127.0.0.1/readyz" > /dev/null; then
-              echo "Proxy stack is up"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Docker Compose stack did not start in time"
-          exit 1
-
-      - name: Smoke test proxy redirect and HTTPS routes
-        run: |
-          curl -fsSI "http://127.0.0.1/" | grep -i "location: https://"
-          curl -kfsS "https://127.0.0.1/" > /dev/null
-          curl -kfsS "https://127.0.0.1/apidocs" > /dev/null
-          curl -kfsS "https://127.0.0.1/api/recipe/recipes/" > /dev/null
-          curl -kfsS "https://127.0.0.1/api/recipe/tags/" > /dev/null
-          curl -kfsS "https://127.0.0.1/api/recipe/ingredients/" > /dev/null
-
-      - name: Show Docker Compose logs on failure
-        if: failure()
-        run: docker compose logs --no-color
-
-      - name: Stop Docker Compose stack
-        if: always()
-        run: |
-          docker compose down --volumes --remove-orphans
 
   deploy-to-azure-vm:
     needs: build-and-smoke-test

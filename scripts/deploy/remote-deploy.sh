@@ -25,8 +25,36 @@ require_cmd curl
 
 cd "${APP_DIR}"
 
+DEFAULT_ENV_FILE="${APP_DIR}/shared/production.env"
+if [[ ! -f "${DEFAULT_ENV_FILE}" && -f "${APP_DIR}/../shared/production.env" ]]; then
+  DEFAULT_ENV_FILE="${APP_DIR}/../shared/production.env"
+fi
+
+DEPLOY_ENV_FILE="${DEPLOY_ENV_FILE:-${DEFAULT_ENV_FILE}}"
+if [[ -f "${DEPLOY_ENV_FILE}" ]]; then
+  log "Loading deployment environment from ${DEPLOY_ENV_FILE}."
+  set -a
+  # shellcheck disable=SC1090
+  source "${DEPLOY_ENV_FILE}"
+  set +a
+fi
+
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  fail "DATABASE_URL is required for PostgreSQL deployment. Set it in the app VM deployment environment."
+fi
+
+log "DATABASE_URL is set; value is hidden."
+
 log "Validating docker compose configuration."
 docker compose config >/dev/null
+
+log "Building app image for schema migration."
+docker compose build app-a
+
+log "Running PostgreSQL schema migrations."
+if ! docker compose run --rm --no-deps app-a npm run db:migrate; then
+  fail "PostgreSQL schema migration failed. Aborting deployment."
+fi
 
 log "Starting application stack."
 docker compose up -d --build --remove-orphans

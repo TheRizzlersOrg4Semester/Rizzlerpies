@@ -1,19 +1,17 @@
 x-app-service: &app-service
   build:
     context: .
-  depends_on:
-    - signoz
   environment: &app-environment
     NODE_ENV: production
     PORT: 4000
-    DATABASE_PATH: /data/app.db
+    DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
     OTEL_SERVICE_NAME: rizzlerpies
-    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://signoz:4318/v1/traces
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
     OTEL_LOG_LEVEL: info
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
   expose:
     - "4000"
-  volumes:
-    - app_data:/data
   restart: unless-stopped
   healthcheck:
     test: ["CMD", "node", "scripts/healthcheck.js", "http://127.0.0.1:4000/readyz"]
@@ -61,17 +59,9 @@ services:
     networks:
       - backend
 
-  signoz:
-    image: signoz/signoz:latest
-    ports:
-      - "3301:3301"
-      - "4317:4317"
-      - "4318:4318"
-    restart: unless-stopped
-    networks:
-      - backend
-
 volumes:
+  # Legacy SQLite storage retained for one-time migration and rollback review.
+  # Runtime app containers now use DATABASE_URL and do not mount this volume.
   app_data:
 
 networks:

@@ -1,0 +1,17 @@
+# One-time SQLite to PostgreSQL data migration override.
+# Use only on the app VM while the legacy app_data volume still contains
+# /data/app.db from the SQLite deployment.
+services:
+  migrate-sqlite-data:
+    build:
+      context: .
+    environment:
+      DATABASE_PATH: /data/app.db
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+    command: npm run db:migrate:data
+    volumes:
+      - app_data:/data:ro
+    networks:
+      - backend
+    profiles:
+      - migration
