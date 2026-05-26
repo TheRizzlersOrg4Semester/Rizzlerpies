@@ -25,8 +25,7 @@
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.21.0",
     "sqlite3": "^5.1.7",
-    "swagger-ui-express": "^5.0.1",
-    "yaml": "^2.8.2"
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -3,4 +3,6 @@ npm-debug.log*
 .env
 .env.local
 ops/nginx/certs/
+__pycache__/
+*.pyc
 setup_exam_board.sh

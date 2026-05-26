@@ -90,9 +90,6 @@ services:
 
 volumes:
   postgres_data:
-  # Legacy SQLite storage retained for one-time migration and rollback review.
-  # Runtime app containers now use DATABASE_URL and do not mount this volume.
-  app_data:
 
 networks:
   backend:

@@ -5,8 +5,11 @@ database migration work. Production is intended to run PostgreSQL on this
 separate VM, while the app VM continues to run the application, Nginx, and
 observability services.
 
-PostgreSQL must not be added as a production service in the main app VM
-`docker-compose.yml` stack.
+`docker-compose.yml` also contains a local PostgreSQL service so fresh clones
+can run a complete app with `docker compose up --build`. That local service is
+not the production database target. On the app VM, the deployment script starts
+only `app-a`, `app-b`, and `proxy`, and the app containers connect to this
+dedicated DB VM through `DATABASE_URL`.
 
 ## Run The Setup Script
 

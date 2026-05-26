@@ -15,3 +15,8 @@ services:
       - backend
     profiles:
       - migration
+
+volumes:
+  # Legacy SQLite storage retained for one-time migration and rollback review.
+  # Runtime app containers use DATABASE_URL and do not mount this volume.
+  app_data:
