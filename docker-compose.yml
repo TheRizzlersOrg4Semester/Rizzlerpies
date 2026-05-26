@@ -4,7 +4,7 @@ x-app-service: &app-service
   environment: &app-environment
     NODE_ENV: production
     PORT: 4000
-    DATABASE_URL: "${DATABASE_URL:?DATABASE_URL is required}"
+    DATABASE_URL: "${DATABASE_URL:-postgres://rizzlerpies:rizzlerpies@postgres:5432/rizzlerpies}"
     OTEL_SERVICE_NAME: rizzlerpies
     OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://host.docker.internal:4318/v1/traces
     OTEL_LOG_LEVEL: info
@@ -25,12 +25,18 @@ x-app-service: &app-service
 services:
   app-a:
     <<: *app-service
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       <<: *app-environment
       INSTANCE_NAME: app-a
 
   app-b:
     <<: *app-service
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       <<: *app-environment
       INSTANCE_NAME: app-b
@@ -59,7 +65,31 @@ services:
     networks:
       - backend
 
+  # Local/default PostgreSQL for fresh clones.
+  # VM deployment sets DATABASE_URL to the dedicated DB VM and starts only the
+  # app/proxy services through scripts/deploy/remote-deploy.sh.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rizzlerpies
+      POSTGRES_USER: rizzlerpies
+      POSTGRES_PASSWORD: rizzlerpies
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/db/local-postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rizzlerpies -d rizzlerpies"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend
+
 volumes:
+  postgres_data:
   # Legacy SQLite storage retained for one-time migration and rollback review.
   # Runtime app containers now use DATABASE_URL and do not mount this volume.
   app_data:

@@ -55,8 +55,9 @@ The new runtime database configuration is:
 DATABASE_URL=postgres://<postgres_user>:<postgres_password>@<db_vm_private_ip>:5432/<database_name>
 ```
 
-The app VM production compose stack keeps Nginx, `app-a`, `app-b`, and SigNoz.
-It does not add PostgreSQL as a production service.
+For local development, `docker-compose.yml` also contains a PostgreSQL service
+so a fresh clone can start as a complete system. The VM deploy script starts
+only the app/proxy services and points `DATABASE_URL` at the dedicated DB VM.
 
 ## Why PostgreSQL Runs On A Separate DB VM
 
@@ -83,14 +84,16 @@ Production:
 
 - PostgreSQL runs on a dedicated database VM.
 - The app VM uses `DATABASE_URL`.
-- The main `docker-compose.yml` does not define a PostgreSQL production
-  service.
+- The VM deploy script starts only the app/proxy services from
+  `docker-compose.yml`; it does not start the local PostgreSQL service.
 - `app_data` remains documented as legacy SQLite storage for one-time migration,
   rollback, and exam review.
 
 Local development and CI:
 
-- `docker-compose.local-postgres.yml` can start a local PostgreSQL helper.
+- `docker-compose.yml` starts a local PostgreSQL container for fresh clones.
+- Fresh local PostgreSQL volumes are initialized from
+  `scripts/db/local-postgres-init/001_recipe_schema_and_data.sql`.
 - GitHub Actions uses a PostgreSQL service container.
 - CI imports controlled recipe test data because it does not have the
   production SQLite Docker volume.
@@ -145,6 +148,12 @@ The data migration script uses one PostgreSQL transaction and stops if the
 target recipe tables already contain data, unless `FORCE_MIGRATION=true` is set
 explicitly. `sqlite3` stays in the project temporarily because it is required
 for this one-time legacy data migration.
+
+For fresh local clones after the migration, `docker-compose.yml` initializes the
+local PostgreSQL volume from `scripts/db/local-postgres-init/`. That SQL file is
+a snapshot of the migrated cookbook data so the project is complete immediately
+with `docker compose up --build`; it does not replace the documented production
+SQLite to PostgreSQL migration path.
 
 ## Conservative Cleanup State
 
@@ -219,8 +228,6 @@ Relative to `main`, the migration work changes or adds:
 - `.github/workflows/node-ci.yml`
 - `README.md`
 - `db.js`
-- `docker-compose.local-postgres.yml`
-- `docker-compose.migration.local.yml`
 - `docker-compose.migration.yml`
 - `docker-compose.yml`
 - `docs/database-migration-plan.md`
@@ -231,6 +238,7 @@ Relative to `main`, the migration work changes or adds:
 - `package-lock.json`
 - `package.json`
 - `scripts/azure/setup-postgres-vm.sh`
+- `scripts/db/local-postgres-init/001_recipe_schema_and_data.sql`
 - `scripts/db/migrate-sqlite-to-postgres.js`
 - `scripts/deploy/remote-deploy.sh`
 - `scripts/test/smoke-db.sh`

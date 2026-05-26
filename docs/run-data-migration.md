@@ -43,10 +43,8 @@ npm run db:migrate
 
 ## 4. Run The One-Time Data Migration
 
-There are two supported data migration compose paths. They use the same
-migration script but mount SQLite from different places.
-
-### Production VM Migration
+The production migration path uses the same app image, but mounts SQLite from
+the legacy Docker volume instead of starting the normal app stack.
 
 Use this on the app VM. It mounts the legacy Docker volume:
 
@@ -65,37 +63,21 @@ docker compose -f docker-compose.yml -f docker-compose.migration.yml run --rm mi
 This command targets only the `migrate-sqlite-data` service. It does not start
 the proxy/Nginx service and the migration service exposes no ports.
 
-### Local File-Based Migration Test
-
-Use this on a developer machine or in CI-style validation when the repository
-fixture exists at `legacy/src/app.db`. It mounts the local SQLite file:
-
-```text
-DATABASE_PATH=/seed/app.db
-```
-
-Start the local PostgreSQL helper first:
+For local development, a fresh `docker compose up --build` already initializes
+PostgreSQL with recipe data from
+`scripts/db/local-postgres-init/001_recipe_schema_and_data.sql`. If you need to
+rehearse the migration script locally, run it directly against a clean
+PostgreSQL database with:
 
 ```bash
-export DATABASE_URL='postgres://rizzlerpies:rizzlerpies@postgres:5432/rizzlerpies'
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
-```
-
-Run schema migrations:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml run --rm app-a npm run db:migrate
-```
-
-Then run the local file migration:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml -f docker-compose.migration.local.yml run --rm migrate-sqlite-data
+export DATABASE_PATH='legacy/src/app.db'
+export DATABASE_URL='postgres://rizzlerpies:rizzlerpies@localhost:5432/rizzlerpies'
+npm run db:migrate
+npm run db:migrate:data
 ```
 
 If `legacy/src/app.db` does not exist locally, use the production VM path with
-the legacy `app_data` volume or restore a copy of the legacy SQLite file before
-running the local migration test.
+the legacy `app_data` volume or restore a copy of the legacy SQLite file first.
 
 ## 5. Verify Row Counts
 
@@ -112,10 +94,17 @@ counts printed by the command.
 
 ## 6. Start The PostgreSQL Runtime Stack
 
-Start the app stack with the same `DATABASE_URL` still set:
+Start the app stack with the same `DATABASE_URL` still set. The deploy script
+starts only the app/proxy services on the app VM:
 
 ```bash
-docker compose up -d --build --remove-orphans
+bash scripts/deploy/remote-deploy.sh "$(pwd)"
+```
+
+If running Compose manually on the app VM, use the same service selection:
+
+```bash
+docker compose -f docker-compose.yml up -d --build --remove-orphans --no-deps app-a app-b proxy
 ```
 
 Verify readiness through the proxy:

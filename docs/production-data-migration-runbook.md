@@ -106,8 +106,8 @@ Keep these backup files until after the exam/demo is complete.
 ```bash
 cd "${RELEASE_DIR}"
 test -n "${DATABASE_URL:?DATABASE_URL is required}"
-docker compose build app-a
-docker compose run --rm --no-deps app-a npm run db:migrate
+docker compose -f docker-compose.yml build app-a
+docker compose -f docker-compose.yml run --rm --no-deps app-a npm run db:migrate
 ```
 
 If this fails, stop here. Do not run the data migration or cut over the app.
@@ -160,7 +160,7 @@ bash scripts/deploy/remote-deploy.sh "${RELEASE_DIR}"
 stack with the same `DATABASE_URL`.
 
 ```bash
-docker compose up -d --build --remove-orphans
+docker compose -f docker-compose.yml up -d --build --remove-orphans --no-deps app-a app-b proxy
 ```
 
 - [ ] Run smoke tests against the app container.
@@ -241,4 +241,4 @@ stored in the `app_data` Docker volume as `/data/app.db`.
 
 After migration: app VM runs Nginx, app-a, app-b, and SigNoz; app containers
 connect with `DATABASE_URL` to PostgreSQL on the dedicated private DB VM.
-PostgreSQL is not a production service in the app VM compose stack.
+The local Compose PostgreSQL service is not started by production deployment.

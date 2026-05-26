@@ -29,13 +29,46 @@ Environment examples:
 
 Do not commit real `.env` files or real database credentials.
 
-## Local Development
+## Local Docker Start
 
-Start a local PostgreSQL helper:
+For a fresh clone, this is the normal local startup:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
+docker compose up --build
 ```
+
+That starts Nginx, two app containers, and a local PostgreSQL container.
+On a fresh local PostgreSQL volume, the database is initialized automatically
+with the recipe schema and recipe data from
+`scripts/db/local-postgres-init/001_recipe_schema_and_data.sql`.
+
+Use `docker compose up -d --build` if you want the same startup detached.
+If an old local PostgreSQL volume already exists without the init data, reset it
+once with `docker compose down -v` and then start again.
+
+Local proxy endpoints:
+
+- HTTP redirect: `http://localhost/`
+- App through Nginx: `https://localhost/`
+- Readiness through Nginx: `https://localhost/readyz`
+- Proxy health: `http://localhost/nginx-health`
+- Swagger UI through Nginx: `https://localhost/apidocs`
+
+The local PostgreSQL service is for local development and CI-style validation.
+Production PostgreSQL runs on the dedicated DB VM and is not deployed as part
+of the app VM stack.
+
+## Direct Local Node.js
+
+Start the local PostgreSQL helper:
+
+```bash
+docker compose up -d postgres
+```
+
+On a fresh local PostgreSQL volume, the database is initialized automatically
+with the recipe schema and recipe data from
+`scripts/db/local-postgres-init/001_recipe_schema_and_data.sql`.
 
 Set `DATABASE_URL` for a direct local Node.js run:
 
@@ -47,10 +80,9 @@ export PORT=4000
 PowerShell uses `$env:DATABASE_URL = '...'` and `$env:PORT = '4000'` instead
 of `export`.
 
-Run schema migrations and start the app:
+Start the app:
 
 ```bash
-npm run db:migrate
 npm start
 ```
 
@@ -62,29 +94,6 @@ The direct app listens on:
 
 For local migrated data from `legacy/src/app.db`, see
 [docs/run-data-migration.md](docs/run-data-migration.md).
-
-## Local Docker Compose
-
-For a local proxy-style run, use the local PostgreSQL override and set
-`DATABASE_URL` to the Compose service hostname:
-
-```bash
-export DATABASE_URL='postgres://rizzlerpies:rizzlerpies@postgres:5432/rizzlerpies'
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d postgres
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml run --rm app-a npm run db:migrate
-docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml up -d --build
-```
-
-Local proxy endpoints:
-
-- HTTP redirect: `http://localhost/`
-- App through Nginx: `https://localhost/`
-- Readiness through Nginx: `https://localhost/readyz`
-- Proxy health: `http://localhost/nginx-health`
-- Swagger UI through Nginx: `https://localhost/apidocs`
-
-The local PostgreSQL service is a development and CI helper only. Production
-PostgreSQL is not part of the main app VM Compose stack.
 
 ## Azure VM Overview
 
@@ -100,8 +109,9 @@ port `5432` must not be opened publicly.
 
 Deployment is handled by GitHub Actions and
 `scripts/deploy/remote-deploy.sh`. The deploy script validates `DATABASE_URL`,
-runs PostgreSQL schema migrations, starts the Docker Compose stack, and waits
-for `/readyz`.
+runs PostgreSQL schema migrations, starts only the app/proxy services, and
+waits for `/readyz`. On the VM, `DATABASE_URL` points to the dedicated DB VM
+instead of the local Compose PostgreSQL service.
 
 VM documentation:
 
@@ -145,6 +155,12 @@ The migrated database-backed scope is:
 `sqlite3` is kept only so the one-time legacy SQLite to PostgreSQL migration
 can be reproduced for exam review. Runtime database access uses `pg`.
 
+For new local clones, `docker-compose.yml` starts PostgreSQL and mounts
+`scripts/db/local-postgres-init/` into Postgres' init directory. That makes the
+local database complete from the first `docker compose up --build`. The
+production migration runbooks remain as historical proof of the real SQLite to
+PostgreSQL cutover.
+
 Migration documentation:
 
 - [Database migration plan](docs/database-migration-plan.md)
@@ -183,7 +199,8 @@ local or VM-level collector can run outside the app stack.
 - `db.js`: PostgreSQL runtime database access
 - `swagger.js`: OpenAPI document for Swagger UI
 - `migrations/`: PostgreSQL schema migrations
-- `scripts/db/`: one-time legacy data migration scripts
+- `scripts/db/`: one-time legacy data migration script and local PostgreSQL
+  init SQL
 - `scripts/azure/`: Azure VM setup scripts
 - `scripts/deploy/`: remote deploy script
 - `ops/nginx/`: Nginx proxy config and Dockerfile

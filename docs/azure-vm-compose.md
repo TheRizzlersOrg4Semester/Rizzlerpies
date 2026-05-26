@@ -2,23 +2,34 @@
 
 ## Target Topology
 
-For the first deployment stage, keep everything on one Azure VM:
+Production-like deployment is split across two VM roles:
 
-- `proxy`: Nginx reverse proxy exposed on ports `80` and `443`
-- `app-a` and `app-b`: Express cookbook application containers on the internal Docker network
-- `app_data`: Docker volume for the SQLite database file
+- App VM: Nginx reverse proxy, `app-a`, and `app-b`
+- DB VM: PostgreSQL on a dedicated private Azure VM
+- Database connection: `DATABASE_URL`
+- Public entrypoint: Nginx on the app VM
+
+The `postgres` service in `docker-compose.yml` exists so a fresh local clone can
+run as a complete system with `docker compose up --build`. The VM deployment
+does not start that local PostgreSQL service; it uses `DATABASE_URL` for the DB
+VM instead.
 
 Traffic flow:
 
-`Client -> Azure public IP -> Nginx proxy -> app-a/app-b -> SQLite volume`
+```text
+Client -> Azure public IP -> Nginx proxy -> app-a/app-b -> private DB VM PostgreSQL
+```
 
 ## Prepare The VM
 
 Recommended baseline:
 
 1. Run `bash scripts/azure/setup.sh` from a machine with Azure CLI access.
-2. Add the printed `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` and optional `DEPLOY_PATH` values as GitHub Actions secrets.
-3. Push to `main` to let the workflow deploy automatically.
+2. Run `scripts/azure/setup-postgres-vm.sh` for the dedicated DB VM.
+3. Configure `DATABASE_URL` on the app VM with the DB VM private IP.
+4. Add the printed `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` and optional
+   `DEPLOY_PATH` values as GitHub Actions secrets.
+5. Push to `main` to let the workflow deploy automatically.
 
 ## Start The Stack
 
@@ -28,33 +39,30 @@ The deployment workflow uploads the current commit to the VM and runs:
 bash scripts/deploy/remote-deploy.sh /home/<user>/rizzlerpies/current
 ```
 
-That script executes:
+That script validates `DATABASE_URL`, runs schema migrations, starts only the
+app/proxy services, and checks readiness:
 
 ```bash
-docker compose up -d --build --remove-orphans
+docker compose -f docker-compose.yml up -d --build --remove-orphans --no-deps app-a app-b proxy
 curl -k https://127.0.0.1/readyz
 ```
 
 If Azure networking is configured correctly, the app should be reachable on:
 
-`https://<vm-public-ip>/`
+```text
+https://<vm-public-ip>/
+```
 
 ## Day-2 Operations
 
-Useful commands:
+Useful app VM commands:
 
 ```bash
-docker compose logs -f
-docker compose ps
-docker compose restart proxy
-docker compose restart app-a app-b
-docker compose up -d --build
-```
-
-To destroy the environment completely:
-
-```bash
-bash scripts/azure/teardown.sh
+docker compose -f docker-compose.yml logs -f app-a app-b proxy
+docker compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml restart proxy
+docker compose -f docker-compose.yml restart app-a app-b
+docker compose -f docker-compose.yml up -d --build --remove-orphans --no-deps app-a app-b proxy
 ```
 
 Health endpoints:
@@ -68,18 +76,8 @@ Health endpoints:
 - The proxy is the only public entrypoint.
 - The application containers are isolated on an internal Docker network.
 - Nginx can keep serving traffic through one app container if the other is unhealthy.
-- The SQLite file is moved out of the image and onto a persistent Docker volume.
-- The proxy and app containers have restart policies and health checks.
-- The same `docker-compose.yml` works for local verification and the Azure VM.
-
-## Splitting Across Multiple VMs Later
-
-This setup is intentionally simple, but it leaves a clean path for the next step:
-
-1. Move `proxy` onto its own VM and update the Nginx upstreams from `app-a:4000` and `app-b:4000` to private IPs or private DNS names for the application VMs.
-2. Keep the app private and only allow traffic from the proxy VM.
-3. Replace SQLite with a network-accessible database before spreading the workload across multiple VMs.
-
-Important note:
-
-SQLite is a good fit for the first single-VM deployment, but it is not a good long-term choice once compute is split across machines. When you move beyond one VM, plan a database migration as part of that change.
+- PostgreSQL is reached over private Azure networking.
+- The local PostgreSQL service keeps fresh clones simple without changing the
+  VM runtime database target.
+- The legacy `app_data` volume remains documented for migration evidence and
+  rollback review.

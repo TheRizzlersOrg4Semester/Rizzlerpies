@@ -5,6 +5,6 @@ RUN apk add --no-cache openssl
 COPY ops/nginx/openssl.cnf /etc/nginx/openssl.cnf
 COPY ops/nginx/start-proxy.sh /start-proxy.sh
 
-RUN chmod +x /start-proxy.sh
+RUN sed -i 's/\r$//' /start-proxy.sh && chmod +x /start-proxy.sh
 
 CMD ["/start-proxy.sh"]

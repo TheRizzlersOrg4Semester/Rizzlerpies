@@ -46,18 +46,18 @@ fi
 log "DATABASE_URL is set; value is hidden."
 
 log "Validating docker compose configuration."
-docker compose config >/dev/null
+docker compose -f docker-compose.yml config >/dev/null
 
 log "Building app image for schema migration."
-docker compose build app-a
+docker compose -f docker-compose.yml build app-a
 
 log "Running PostgreSQL schema migrations."
-if ! docker compose run --rm --no-deps app-a npm run db:migrate; then
+if ! docker compose -f docker-compose.yml run --rm --no-deps app-a npm run db:migrate; then
   fail "PostgreSQL schema migration failed. Aborting deployment."
 fi
 
 log "Starting application stack."
-docker compose up -d --build --remove-orphans
+docker compose -f docker-compose.yml up -d --build --remove-orphans --no-deps app-a app-b proxy
 
 log "Waiting for readiness endpoint ${HEALTHCHECK_URL}."
 for _ in $(seq 1 30); do
@@ -69,5 +69,5 @@ for _ in $(seq 1 30); do
 done
 
 log "Deployment failed health checks. Printing compose logs."
-docker compose logs --no-color
+docker compose -f docker-compose.yml logs --no-color
 fail "Application did not become ready in time."

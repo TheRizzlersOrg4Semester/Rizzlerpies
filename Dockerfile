@@ -9,7 +9,9 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY . .
 
-RUN mkdir -p /data && chown -R node:node /app /data
+RUN find scripts -type f -name "*.sh" -exec sed -i 's/\r$//' {} + \
+  && mkdir -p /data \
+  && chown -R node:node /app /data
 
 USER node
 
