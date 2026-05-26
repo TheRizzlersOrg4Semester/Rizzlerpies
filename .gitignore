@@ -3,3 +3,4 @@ npm-debug.log*
 .env
 .env.local
 ops/nginx/certs/
+setup_exam_board.sh
