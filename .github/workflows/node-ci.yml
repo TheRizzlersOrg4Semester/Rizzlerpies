@@ -1,6 +1,7 @@
 name: Node CI
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main", "develop"]
   pull_request:
@@ -69,6 +70,16 @@ jobs:
 
       - name: Lint JavaScript
         run: npm run lint
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose -f docker-compose.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml -f docker-compose.migration.yml config --quiet
+          docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml -f docker-compose.migration.local.yml config --quiet
+
+      - name: Build Docker images
+        run: docker compose -f docker-compose.yml -f docker-compose.local-postgres.yml build app-a proxy
 
       - name: Run PostgreSQL schema migrations
         run: npm run db:migrate
@@ -144,6 +155,9 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
 
     env:
       SSH_HOST: ${{ secrets.SSH_HOST }}
