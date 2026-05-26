@@ -6,7 +6,12 @@ Node.js + Express SSR app using EJS templates.
 
 1. Install dependencies:
    `npm install`
-2. Start the server:
+2. Copy `.env.example` to `.env` so the app can read the local PostgreSQL connection string automatically when it starts.
+3. Start a local PostgreSQL instance:
+   `docker compose -f docker-compose.local-postgres.yml up -d postgres`
+4. Apply the database schema:
+   `npm run db:migrate`
+5. Start the server:
    `npm start`
 
 The app listens on `http://localhost:4000` by default.

@@ -5,7 +5,9 @@ let initPromise = null;
 
 const getDatabaseUrl = () => {
   if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is required for PostgreSQL database access');
+    throw new Error(
+      'DATABASE_URL is required for PostgreSQL database access. Copy .env.example to .env or export DATABASE_URL before starting the app.'
+    );
   }
 
   return process.env.DATABASE_URL;
