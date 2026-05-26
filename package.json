@@ -6,13 +6,13 @@
   "main": "app.js",
   "scripts": {
     "db:create-migration": "node-pg-migrate create",
-    "db:migrate:data": "node scripts/db/migrate-sqlite-to-postgres.js",
-    "db:migrate": "node-pg-migrate up",
-    "db:migrate:redo": "node-pg-migrate redo",
-    "db:rollback": "node-pg-migrate down",
+    "db:migrate:data": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/db/migrate-sqlite-to-postgres.js",
+    "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/node-pg-migrate/bin/node-pg-migrate.js up",
+    "db:migrate:redo": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/node-pg-migrate/bin/node-pg-migrate.js redo",
+    "db:rollback": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/node-pg-migrate/bin/node-pg-migrate.js down",
     "lint": "eslint .",
     "smoke:db": "bash scripts/test/smoke-db.sh",
-    "start": "node app.js"
+    "start": "node --env-file-if-exists=.env --env-file-if-exists=.env.local app.js"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",
