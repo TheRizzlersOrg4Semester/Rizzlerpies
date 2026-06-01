@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-RESOURCE_GROUP="${RESOURCE_GROUP:-${AZURE_RESOURCE_GROUP:-recipe-cookbook-rg}}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-${AZURE_RESOURCE_GROUP:-rizzlerpies-rg}}"
 LOCATION="${LOCATION:-${AZURE_LOCATION:-northeurope}}"
-APP_VM_NAME="${APP_VM_NAME:-${AZURE_VM_NAME:-recipe-cookbook-vm}}"
-DB_VM_NAME="${DB_VM_NAME:-recipe-cookbook-db-vm}"
+APP_VM_NAME="${APP_VM_NAME:-${AZURE_VM_NAME:-rizzlerpies-vm}}"
+DB_VM_NAME="${DB_VM_NAME:-${AZURE_DB_VM_NAME:-rizzlerpies-db-vm}}"
 ADMIN_USERNAME="${ADMIN_USERNAME:-${AZURE_ADMIN_USERNAME:-azureuser}}"
 VNET_NAME="${VNET_NAME:-}"
 SUBNET_NAME="${SUBNET_NAME:-}"

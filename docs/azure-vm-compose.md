@@ -2,46 +2,73 @@
 
 ## Target Topology
 
-For the first deployment stage, keep everything on one Azure VM:
+Production-like deployment is split across two Azure VMs:
 
-- `proxy`: Nginx reverse proxy exposed on ports `80` and `443`
-- `app-a` and `app-b`: Express cookbook application containers on the internal Docker network
-- `app_data`: Docker volume for the SQLite database file
+- App VM `rizzlerpies-vm`: Nginx reverse proxy plus `app-a` and `app-b`
+  Express containers.
+- DB VM `rizzlerpies-db-vm`: PostgreSQL running in Docker with a persistent
+  Docker volume.
+- Public entrypoint: Nginx on the app VM, exposed on ports `80` and `443`.
+- Private database path: app containers connect to PostgreSQL with
+  `DATABASE_URL`.
 
 Traffic flow:
 
-`Client -> Azure public IP -> Nginx proxy -> app-a/app-b -> SQLite volume`
+```text
+Client
+  -> Azure public IP
+  -> app VM Nginx proxy
+  -> app-a / app-b
+  -> private DB VM PostgreSQL
+```
 
-## Prepare The VM
+PostgreSQL must not be exposed publicly and must not be added as a production
+service in the main app VM `docker-compose.yml` stack.
+
+## Prepare The VMs
 
 Recommended baseline:
 
 1. Run `bash scripts/azure/setup.sh` from a machine with Azure CLI access.
-2. Add the printed `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY` and optional `DEPLOY_PATH` values as GitHub Actions secrets.
-3. Push to `main` to let the workflow deploy automatically.
+2. Run `POSTGRES_PASSWORD='<real-password>' bash scripts/azure/setup-postgres-vm.sh`.
+3. Add the printed `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, and optional
+   `DEPLOY_PATH` values as GitHub Actions secrets.
+4. Create `${DEPLOY_PATH}/shared/production.env` on the app VM with the real
+   production database connection:
+
+```text
+DATABASE_URL=postgres://<postgres_user>:<postgres_password>@<db_vm_private_ip>:5432/<database_name>
+NODE_ENV=production
+PORT=4000
+```
+
+Do not commit the real `DATABASE_URL` or PostgreSQL password.
 
 ## Start The Stack
 
-The deployment workflow uploads the current commit to the VM and runs:
+The deployment workflow uploads the current commit to the app VM and runs:
 
 ```bash
 bash scripts/deploy/remote-deploy.sh /home/<user>/rizzlerpies/current
 ```
 
-That script executes:
+That script:
 
-```bash
-docker compose up -d --build --remove-orphans
-curl -k https://127.0.0.1/readyz
-```
+- loads `${DEPLOY_PATH}/shared/production.env` when present
+- validates `DATABASE_URL`
+- runs PostgreSQL schema migrations
+- starts the Docker Compose app stack
+- waits for `https://127.0.0.1/readyz`
 
 If Azure networking is configured correctly, the app should be reachable on:
 
-`https://<vm-public-ip>/`
+```text
+https://<app-vm-public-ip>/
+```
 
 ## Day-2 Operations
 
-Useful commands:
+Useful app VM commands:
 
 ```bash
 docker compose logs -f
@@ -51,35 +78,37 @@ docker compose restart app-a app-b
 docker compose up -d --build
 ```
 
-To destroy the environment completely:
+Health endpoints:
+
+- `GET /healthz`: application liveness
+- `GET /readyz`: readiness through the HTTPS proxy or directly against the app
+- `GET /nginx-health`: proxy-only health check
+
+To destroy the Azure resource group completely:
 
 ```bash
 bash scripts/azure/teardown.sh
 ```
 
-Health endpoints:
-
-- `GET /healthz`: liveness for the application
-- `GET /readyz`: readiness through the HTTPS proxy or directly against the app
-- `GET /nginx-health`: proxy-only health check
-
 ## Why This Is DevOps-Friendly
 
-- The proxy is the only public entrypoint.
+- The proxy is the only public application entrypoint.
 - The application containers are isolated on an internal Docker network.
-- Nginx can keep serving traffic through one app container if the other is unhealthy.
-- The SQLite file is moved out of the image and onto a persistent Docker volume.
-- The proxy and app containers have restart policies and health checks.
-- The same `docker-compose.yml` works for local verification and the Azure VM.
+- Nginx can keep serving traffic through one app container if the other is
+  unhealthy.
+- Runtime data lives in PostgreSQL on a dedicated private DB VM.
+- PostgreSQL data is stored in a persistent Docker volume on the DB VM.
+- The DB VM NSG allows TCP `5432` only from the app VM private IP by default.
+- The deploy script fails early when `DATABASE_URL` is missing and runs schema
+  migrations before replacing the running app stack.
 
-## Splitting Across Multiple VMs Later
+## Scaling Later
 
-This setup is intentionally simple, but it leaves a clean path for the next step:
+This setup keeps the public proxy and application containers on one app VM, but
+the database is already separated. To add more backend VMs later:
 
-1. Move `proxy` onto its own VM and update the Nginx upstreams from `app-a:4000` and `app-b:4000` to private IPs or private DNS names for the application VMs.
-2. Keep the app private and only allow traffic from the proxy VM.
-3. Replace SQLite with a network-accessible database before spreading the workload across multiple VMs.
-
-Important note:
-
-SQLite is a good fit for the first single-VM deployment, but it is not a good long-term choice once compute is split across machines. When you move beyond one VM, plan a database migration as part of that change.
+1. Create additional private app VMs.
+2. Allow PostgreSQL access from the app subnet with `ALLOW_APP_SUBNET=true` or
+   add explicit NSG allow rules for each app VM private IP.
+3. Point each app deployment at the same private PostgreSQL `DATABASE_URL`.
+4. Update the public proxy or load balancer to route traffic to all app VMs.

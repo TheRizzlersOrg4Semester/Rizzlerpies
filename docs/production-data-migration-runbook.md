@@ -37,8 +37,8 @@ docker volume inspect "${APP_DATA_VOLUME}" >/dev/null
 
 ```bash
 az vm show \
-  --resource-group recipe-cookbook-rg \
-  --name recipe-cookbook-db-vm \
+  --resource-group rizzlerpies-rg \
+  --name rizzlerpies-db-vm \
   --query privateIps \
   --output tsv
 ```

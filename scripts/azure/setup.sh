@@ -2,14 +2,15 @@
 
 set -euo pipefail
 
-RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-recipe-cookbook-rg}"
-LOCATION="${AZURE_LOCATION:-northeurope}"
-VM_NAME="${AZURE_VM_NAME:-recipe-cookbook-vm}"
-VM_SIZE="${AZURE_VM_SIZE:-Standard_B1s}"
-ADMIN_USERNAME="${AZURE_ADMIN_USERNAME:-azureuser}"
-SSH_PUBLIC_KEY_PATH="${AZURE_SSH_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-${AZURE_RESOURCE_GROUP:-rizzlerpies-rg}}"
+LOCATION="${LOCATION:-${AZURE_LOCATION:-northeurope}}"
+VM_NAME="${APP_VM_NAME:-${AZURE_VM_NAME:-rizzlerpies-vm}}"
+VM_SIZE="${VM_SIZE:-${AZURE_VM_SIZE:-Standard_B1s}}"
+ADMIN_USERNAME="${ADMIN_USERNAME:-${AZURE_ADMIN_USERNAME:-azureuser}}"
+SSH_PUBLIC_KEY_PATH="${SSH_PUBLIC_KEY_PATH:-${AZURE_SSH_PUBLIC_KEY:-$HOME/.ssh/id_ed25519.pub}}"
 SSH_PRIVATE_KEY_PATH="${SSH_PUBLIC_KEY_PATH%.pub}"
 DEPLOY_PATH="${DEPLOY_PATH:-/home/${ADMIN_USERNAME}/rizzlerpies}"
+PRODUCTION_ENV_PATH="${PRODUCTION_ENV_PATH:-${DEPLOY_PATH}/shared/production.env}"
 RECREATE_RESOURCE_GROUP="${RECREATE_RESOURCE_GROUP:-false}"
 INSTALL_DOCKER="${INSTALL_DOCKER:-true}"
 
@@ -125,6 +126,14 @@ Add these GitHub Actions secrets before running the deploy job:
   SSH_USER=${ADMIN_USERNAME}
   SSH_PRIVATE_KEY=<contents of ${SSH_PRIVATE_KEY_PATH}>
   DEPLOY_PATH=${DEPLOY_PATH}
+
+Before deploying the PostgreSQL-backed app, create this file on the app VM:
+  ${PRODUCTION_ENV_PATH}
+
+It should contain the real production environment, for example:
+  DATABASE_URL=postgres://<postgres_user>:<postgres_password>@<db_vm_private_ip>:5432/<database_name>
+  NODE_ENV=production
+  PORT=4000
 
 To tear everything down later:
   scripts/azure/teardown.sh

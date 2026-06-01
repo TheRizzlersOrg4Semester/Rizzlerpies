@@ -16,8 +16,8 @@ Verify PostgreSQL is running on the DB VM:
 
 ```bash
 az vm run-command invoke \
-  --resource-group recipe-cookbook-rg \
-  --name recipe-cookbook-db-vm \
+  --resource-group rizzlerpies-rg \
+  --name rizzlerpies-db-vm \
   --command-id RunShellScript \
   --scripts "sudo docker exec rizzlerpies-postgres pg_isready -U rizzlerpies -d rizzlerpies"
 ```

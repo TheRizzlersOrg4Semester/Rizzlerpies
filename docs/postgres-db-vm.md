@@ -32,10 +32,10 @@ The script supports these variables:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `RESOURCE_GROUP` | `recipe-cookbook-rg` | Azure resource group. |
+| `RESOURCE_GROUP` | `rizzlerpies-rg` | Azure resource group. |
 | `LOCATION` | `northeurope` | Azure region used when resources must be created. |
-| `APP_VM_NAME` | `recipe-cookbook-vm` | Existing app VM that will connect to PostgreSQL. |
-| `DB_VM_NAME` | `recipe-cookbook-db-vm` | Dedicated PostgreSQL VM name. |
+| `APP_VM_NAME` | `rizzlerpies-vm` | Existing app VM that will connect to PostgreSQL. |
+| `DB_VM_NAME` | `rizzlerpies-db-vm` | Dedicated PostgreSQL VM name. |
 | `ADMIN_USERNAME` | `azureuser` | Admin username for the database VM. |
 | `VNET_NAME` | derived from app VM | Existing VNet used by the app VM. |
 | `SUBNET_NAME` | derived from app VM | Existing subnet used by the app VM. |
@@ -48,6 +48,9 @@ Optional variables:
 
 - `SSH_PUBLIC_KEY_PATH`: SSH public key path. Defaults to
   `$HOME/.ssh/id_ed25519.pub`.
+- `AZURE_RESOURCE_GROUP`, `AZURE_LOCATION`, `AZURE_VM_NAME`,
+  `AZURE_DB_VM_NAME`, `AZURE_ADMIN_USERNAME`, and `AZURE_SSH_PUBLIC_KEY`:
+  compatibility aliases for the matching variables above.
 - `ALLOW_APP_SUBNET`: when `true`, allows TCP 5432 from the app subnet instead
   of only the app VM private IP. Default is `false`.
 
@@ -57,8 +60,8 @@ Use Azure VM run command to verify the container and database health:
 
 ```bash
 az vm run-command invoke \
-  --resource-group recipe-cookbook-rg \
-  --name recipe-cookbook-db-vm \
+  --resource-group rizzlerpies-rg \
+  --name rizzlerpies-db-vm \
   --command-id RunShellScript \
   --scripts "sudo docker ps --filter name=rizzlerpies-postgres && sudo docker exec rizzlerpies-postgres pg_isready -U rizzlerpies -d rizzlerpies"
 ```

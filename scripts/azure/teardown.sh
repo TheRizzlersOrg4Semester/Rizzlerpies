@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-recipe-cookbook-rg}"
+RESOURCE_GROUP="${RESOURCE_GROUP:-${AZURE_RESOURCE_GROUP:-rizzlerpies-rg}}"
 AUTO_CONFIRM="${AUTO_CONFIRM:-false}"
 
 fail() {
