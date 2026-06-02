@@ -53,6 +53,10 @@ app.get('/readyz', async (req, res) => {
   }
 });
 
+app.get('/exam-cockpit', (req, res) => {
+  res.render('exam_cockpit', { layout: false });
+});
+
 app.get('/', async (req, res, next) => {
   try {
     const recipes = await listRecipes();
