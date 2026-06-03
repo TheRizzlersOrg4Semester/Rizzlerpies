@@ -57,6 +57,27 @@ app.get('/exam-cockpit', (req, res) => {
   res.render('exam_cockpit', { layout: false });
 });
 
+app.get('/exam-cockpit/assets/arkitektur-diagram.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'arkitektur-diagram.png'));
+});
+
+app.get('/exam-cockpit/assets/confirmed-rows.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'confirmed rows.png'));
+});
+
+app.get('/exam-cockpit/assets/docker-compose-ps.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'dockerComposePS.png'));
+});
+
+app.get('/exam-cockpit/evidence/failed-requests-by-url', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, 'public', 'evidence', 'failed-requests-by-url.csv'));
+});
+
+app.get('/exam-cockpit/evidence/failed-requests-by-url/download', (req, res) => {
+  res.download(path.join(__dirname, 'public', 'evidence', 'failed-requests-by-url.csv'));
+});
+
 app.get('/', async (req, res, next) => {
   try {
     const recipes = await listRecipes();

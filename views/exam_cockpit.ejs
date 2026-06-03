@@ -151,6 +151,52 @@
       font-weight: 700;
     }
 
+    .showcase {
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      margin: 0 0 22px;
+      padding: 12px;
+    }
+
+    .showcase-copy {
+      min-width: 0;
+    }
+
+    .showcase-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 0 2px;
+      text-transform: uppercase;
+    }
+
+    .showcase-current {
+      font-size: 14px;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .showcase-button {
+      background: var(--ink);
+      border: 1px solid var(--ink);
+      color: var(--surface);
+      cursor: pointer;
+      font: 700 13px Arial, Helvetica, sans-serif;
+      min-height: 38px;
+      padding: 0 16px;
+      white-space: nowrap;
+    }
+
+    .showcase-button:hover,
+    .showcase-button:focus-visible {
+      background: var(--accent);
+      border-color: var(--accent);
+      outline: none;
+    }
+
     @media (max-width: 760px) {
       main {
         width: min(100% - 24px, 1120px);
@@ -159,6 +205,11 @@
 
       .meta {
         grid-template-columns: 1fr;
+      }
+
+      .showcase {
+        align-items: stretch;
+        flex-direction: column;
       }
 
       th:nth-child(4),
@@ -198,6 +249,14 @@
       </div>
     </section>
 
+    <section class="showcase" aria-label="Funktionelt showcase flow">
+      <div class="showcase-copy">
+        <p class="showcase-title">Showcase flow</p>
+        <p class="showcase-current" id="showcase-current">01 Arkitekturdiagram</p>
+      </div>
+      <button class="showcase-button" id="showcase-next" type="button">Næste</button>
+    </section>
+
     <table aria-label="Eksamenslinks">
       <thead>
         <tr>
@@ -211,8 +270,8 @@
         <tr>
           <td>01</td>
           <td class="topic">Arkitekturdiagram</td>
-          <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/docs/database-migration-plan.md#final-before-and-after-architecture" target="_blank" rel="noreferrer">Before/after architecture</a></td>
-          <td class="note">VM-topologi før og efter SQLite til PostgreSQL.</td>
+          <td><a href="/exam-cockpit/assets/arkitektur-diagram.png" target="_blank" rel="noreferrer">Åbn arkitekturdiagram</a></td>
+          <td class="note">PNG-diagram fra cockpit-assets i views-mappen.</td>
         </tr>
         <tr>
           <td>02</td>
@@ -253,8 +312,12 @@
         <tr>
           <td>08</td>
           <td class="topic">Row count verification</td>
-          <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/docs/production-data-migration-runbook.md#4-data-migration" target="_blank" rel="noreferrer">Runbook verification</a></td>
-          <td class="note">Forventede tællinger for de fem migrerede tabeller.</td>
+          <td>
+            <a href="/exam-cockpit/assets/confirmed-rows.png" target="_blank" rel="noreferrer">Åbn confirmed rows</a>
+            <span class="placeholder"> / </span>
+            <a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/docs/postgres-cutover-evidence.md" target="_blank" rel="noreferrer">Cutover evidence</a>
+          </td>
+          <td class="note">Row counts og migrationsbevis. Sekundært: <a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/docs/production-data-migration-runbook.md#4-data-migration" target="_blank" rel="noreferrer">runbook commands</a>.</td>
         </tr>
         <tr>
           <td>09</td>
@@ -270,54 +333,116 @@
         </tr>
         <tr>
           <td>11</td>
+          <td class="topic">Docker compose ps</td>
+          <td><a href="/exam-cockpit/assets/docker-compose-ps.png" target="_blank" rel="noreferrer">Åbn docker compose ps</a></td>
+          <td class="note">Container status på proxy, app health og ports.</td>
+        </tr>
+        <tr>
+          <td>12</td>
           <td class="topic">/healthz</td>
           <td><a href="/healthz" target="_blank" rel="noreferrer">Åbn healthz</a></td>
           <td class="note">Liveness endpoint uden DB-check.</td>
         </tr>
         <tr>
-          <td>12</td>
+          <td>13</td>
           <td class="topic">/readyz</td>
           <td><a href="/readyz" target="_blank" rel="noreferrer">Åbn readyz</a></td>
           <td class="note">Readiness endpoint med PostgreSQL connectivity-check.</td>
         </tr>
         <tr>
-          <td>13</td>
+          <td>14</td>
           <td class="topic">GitHub Actions successful run</td>
-          <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/actions/runs/26456038218" target="_blank" rel="noreferrer">Successful Node CI run</a></td>
-          <td class="note">Seneste kendte succesfulde run fundet via GitHub CLI.</td>
+          <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/actions/runs/26878409662" target="_blank" rel="noreferrer">Successful Node CI run</a></td>
+          <td class="note">Ny succesfuld GitHub Actions-run fra eksamensevidence.</td>
         </tr>
         <tr>
-          <td>14</td>
+          <td>15</td>
           <td class="topic">.github/workflows/node-ci.yml</td>
           <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/.github/workflows/node-ci.yml" target="_blank" rel="noreferrer">CI workflow</a></td>
           <td class="note">Lint, migration, data import, app start og smoke test.</td>
         </tr>
         <tr>
-          <td>15</td>
+          <td>16</td>
           <td class="topic">tracing.js</td>
           <td><a href="https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/tracing.js" target="_blank" rel="noreferrer">OpenTelemetry setup</a></td>
           <td class="note">Tracing setup og OTLP exporter.</td>
         </tr>
         <tr>
-          <td>16</td>
+          <td>17</td>
           <td class="topic">SigNoz dashboard</td>
           <td><a href="http://20.251.147.233:8080/dashboard/019dd42a-6f2e-7630-bb68-beb6ed248aed?relativeTime=1d" target="_blank" rel="noreferrer">Åbn SigNoz dashboard</a></td>
           <td class="note">Brug det konkrete SigNoz-dashboard fra eksamensmiljøet.</td>
         </tr>
         <tr>
-          <td>17</td>
-          <td class="topic">SigNoz failed requests</td>
-          <td><a href="/static/evidence/failed-requests-by-url.csv" target="_blank" rel="noreferrer">Åbn failed requests dataset</a></td>
-          <td class="note">CSV-uddrag fra første gang de fejlede requests blev opdaget.</td>
-        </tr>
-        <tr>
           <td>18</td>
-          <td class="topic">Backup-folder med screenshots/video</td>
-          <td><span class="placeholder">PLACEHOLDER:</span> indsæt mappe eller Drive-link</td>
-          <td class="note">Bevismateriale: screenshots, video og migrationsoutput.</td>
+          <td class="topic">SigNoz failed requests</td>
+          <td>
+            <a href="/exam-cockpit/evidence/failed-requests-by-url" target="_blank" rel="noreferrer">Vis CSV-indhold</a>
+            <span class="placeholder"> / </span>
+            <a href="/exam-cockpit/evidence/failed-requests-by-url/download">Download CSV</a>
+          </td>
+          <td class="note">CSV-uddrag fra første gang de fejlede requests blev opdaget.</td>
         </tr>
       </tbody>
     </table>
   </main>
+  <script>
+    const showcaseFlow = [
+      { label: '01 Arkitekturdiagram', hrefs: ['/exam-cockpit/assets/arkitektur-diagram.png'] },
+      { label: '02 /apidocs', hrefs: ['/apidocs'] },
+      { label: '01 Arkitekturdiagram', hrefs: ['/exam-cockpit/assets/arkitektur-diagram.png'] },
+      { label: '04 db.js', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/db.js'] },
+      { label: '05 Migrationsfil', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/migrations/1779722203738_initial-recipe-schema.js'] },
+      { label: '08 Row count verification', hrefs: ['/exam-cockpit/assets/confirmed-rows.png'] },
+      { label: '06 SQLite til PostgreSQL migrationsscript', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/scripts/db/migrate-sqlite-to-postgres.js'] },
+      { label: '13 /readyz', hrefs: ['/readyz'] },
+      { label: '09 docker-compose.yml', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/docker-compose.yml'] },
+      { label: '10 Nginx config', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/ops/nginx/default.conf'] },
+      { label: '11 Docker compose ps', hrefs: ['/exam-cockpit/assets/docker-compose-ps.png'] },
+      { label: '12+13 Health checks', hrefs: ['/healthz', '/readyz'] },
+      { label: '14 GitHub Actions successful run', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/actions/runs/26878409662'] },
+      { label: '15 CI workflow', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/.github/workflows/node-ci.yml'] },
+      { label: '16 tracing.js', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/tracing.js'] },
+      { label: '17 SigNoz dashboard', hrefs: ['http://20.251.147.233:8080/dashboard/019dd42a-6f2e-7630-bb68-beb6ed248aed?relativeTime=1d'] },
+      { label: '18 SigNoz failed requests', hrefs: ['/exam-cockpit/evidence/failed-requests-by-url'] },
+      { label: '01 Arkitekturdiagram', hrefs: ['/exam-cockpit/assets/arkitektur-diagram.png'] },
+    ];
+
+    let showcaseIndex = 0;
+    const showcaseCurrent = document.getElementById('showcase-current');
+    const showcaseNext = document.getElementById('showcase-next');
+
+    const renderShowcase = () => {
+      showcaseCurrent.textContent = showcaseFlow[showcaseIndex].label;
+    };
+
+    const openShowcaseStep = (direction = 1) => {
+      const step = showcaseFlow[showcaseIndex];
+
+      step.hrefs.forEach((href) => {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      });
+
+      showcaseIndex = (showcaseIndex + direction + showcaseFlow.length) % showcaseFlow.length;
+      renderShowcase();
+    };
+
+    showcaseNext.addEventListener('click', () => openShowcaseStep(1));
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        openShowcaseStep(1);
+      }
+
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        showcaseIndex = (showcaseIndex - 1 + showcaseFlow.length) % showcaseFlow.length;
+        openShowcaseStep(1);
+      }
+    });
+
+    renderShowcase();
+  </script>
 </body>
 </html>
