@@ -6,6 +6,38 @@ body {
     font-family: Arial, sans-serif;
 }
 
+#rain-container {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.rain-picture {
+    position: absolute;
+    top: -90px;
+    height: auto;
+    user-select: none;
+    animation: picture-rain var(--rain-duration) linear forwards;
+}
+
+@keyframes picture-rain {
+    from {
+        transform: translate3d(0, -90px, 0) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    to {
+        transform: translate3d(var(--rain-drift), calc(100vh + 120px), 0) rotate(calc(var(--rain-spin) * 360deg));
+        opacity: 0.9;
+    }
+}
+
 table {
     border-collapse: collapse;
 }
