@@ -1,4 +1,4 @@
-/* global document */
+/* global Audio, document */
 
 (() => {
   const container = document.getElementById('rain-container');
@@ -8,10 +8,12 @@
   }
 
   const imageSrc = container.dataset.rainImage || '/public/rain-picture.png';
+  const audioSrc = container.dataset.rainAudio;
   const maxDrops = 35;
   const triggerWord = 'claus';
   let typedText = '';
   let rainInterval = null;
+  let rainAudio = null;
 
   function createDrop() {
     if (container.childElementCount >= maxDrops) {
@@ -39,6 +41,12 @@
   function startRain() {
     if (rainInterval) {
       return;
+    }
+
+    if (audioSrc) {
+      rainAudio = rainAudio || new Audio(audioSrc);
+      rainAudio.currentTime = 0;
+      rainAudio.play().catch(() => {});
     }
 
     for (let i = 0; i < 8; i += 1) {

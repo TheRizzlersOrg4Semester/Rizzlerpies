@@ -197,6 +197,13 @@
       outline: none;
     }
 
+    .showcase-button:disabled {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--muted);
+      cursor: default;
+    }
+
     @media (max-width: 760px) {
       main {
         width: min(100% - 24px, 1120px);
@@ -402,10 +409,12 @@
       { label: '12+13 Health checks', hrefs: ['/healthz', '/readyz'] },
       { label: '14 GitHub Actions successful run', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/actions/runs/26878409662'] },
       { label: '15 CI workflow', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/.github/workflows/node-ci.yml'] },
+      { label: 'GitHub Actions job', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/actions/runs/26878409662/job/79271791701'] },
       { label: '16 tracing.js', hrefs: ['https://github.com/TheRizzlersOrg4Semester/Rizzlerpies/blob/main/tracing.js'] },
       { label: '17 SigNoz dashboard', hrefs: ['http://20.251.147.233:8080/dashboard/019dd42a-6f2e-7630-bb68-beb6ed248aed?relativeTime=1d'] },
       { label: '18 SigNoz failed requests', hrefs: ['/exam-cockpit/evidence/failed-requests-by-url'] },
       { label: '01 Arkitekturdiagram', hrefs: ['/exam-cockpit/assets/arkitektur-diagram.png'] },
+      { label: 'Demo End', hrefs: [] },
     ];
 
     let showcaseIndex = 0;
@@ -413,32 +422,44 @@
     const showcaseNext = document.getElementById('showcase-next');
 
     const renderShowcase = () => {
+      const isDemoEnd = showcaseFlow[showcaseIndex].hrefs.length === 0;
+
       showcaseCurrent.textContent = showcaseFlow[showcaseIndex].label;
+      showcaseNext.disabled = isDemoEnd;
+      showcaseNext.textContent = isDemoEnd ? 'Demo End' : 'Næste';
     };
 
-    const openShowcaseStep = (direction = 1) => {
+    const openShowcaseStep = () => {
       const step = showcaseFlow[showcaseIndex];
+
+      if (step.hrefs.length === 0) {
+        return;
+      }
 
       step.hrefs.forEach((href) => {
         window.open(href, '_blank', 'noopener,noreferrer');
       });
 
-      showcaseIndex = (showcaseIndex + direction + showcaseFlow.length) % showcaseFlow.length;
+      showcaseIndex = Math.min(showcaseIndex + 1, showcaseFlow.length - 1);
       renderShowcase();
     };
 
-    showcaseNext.addEventListener('click', () => openShowcaseStep(1));
+    showcaseNext.addEventListener('click', openShowcaseStep);
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
         event.preventDefault();
-        openShowcaseStep(1);
+        openShowcaseStep();
       }
 
       if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
         event.preventDefault();
-        showcaseIndex = (showcaseIndex - 1 + showcaseFlow.length) % showcaseFlow.length;
-        openShowcaseStep(1);
+
+        if (showcaseIndex > 0) {
+          showcaseIndex -= 1;
+          renderShowcase();
+          openShowcaseStep();
+        }
       }
     });
 

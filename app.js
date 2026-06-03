@@ -26,6 +26,9 @@ app.set('trust proxy', 1);
 app.use(expressLayouts);
 app.set('layout', 'base');
 app.use('/static', express.static(path.join(__dirname, 'public')));
+app.get('/static/rain-audio.mp3', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'hot-butter-popcorn-8-bit-remix_VX8PKrcv.mp3'));
+});
 app.use(express.json());
 app.use((req, res, next) => {
   res.set('X-App-Instance', instanceName);
