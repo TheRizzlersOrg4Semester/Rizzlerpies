@@ -10,7 +10,7 @@ dedicated private database VM.
 
 Requirements:
 
-- Node.js 20+
+- Node.js 24+
 - npm
 - Docker and Docker Compose for local PostgreSQL, local proxy testing, and VM
   deployment
